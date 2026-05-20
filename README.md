@@ -272,8 +272,8 @@ python trainer.py \
 ```bibtex
 @inproceedings{epiformer2026,
   title={EpiFormer: Antibody-Aware Epitope Prediction with Interleaved Cross-Attention},
-  author={Anonymous},
-  booktitle={NeurIPS},
+  author={Mansoor Ahmed, Huirong Chai, Haoxin Wang, Hemanth Venkateswara, Murray Patterson},
+  booktitle={arXiv},
   year={2026}
 }
 ```
