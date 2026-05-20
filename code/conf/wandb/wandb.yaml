@@ -1,0 +1,10 @@
+project: ""
+name: null  # auto-generated
+entity: ""
+# project: ${oc.env:WANDB_PROJECT}
+api_key: ${oc.env:WANDB_API_KEY}
+save_dir: ${hydra:runtime.cwd}/../../../results/hgraphepi/m3epi/wandb
+# mode: online
+notes: "Hierarchical"  #${mode}  # auto-generated
+tags:
+ - ${mode}  # auto-generated

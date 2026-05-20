@@ -1,0 +1,387 @@
+\documentclass[11pt]{article}
+% \documentclass[10pt,twocolumn,letterpaper]{article}
+
+
+% \usepackage{cvpr}      % To produce the REVIEW version
+
+\setcounter{secnumdepth}{5}
+\setcounter{tocdepth}{5}
+
+
+
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+% \usepackage{dsfont}
+\usepackage{graphicx}
+\usepackage{bbm}
+% \usepackage[breaklinks=true, colorlinks, citecolor=red,
+% linkcolor=gfGG, urlcolor=gfFP]{hyperref}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{bm,bbm} 
+\usepackage{listings}
+\usepackage{color}
+% \usepackage{tikz}
+% \usetikzlibrary{arrows.meta}
+\usepackage{multirow}
+\usepackage{amsmath} 
+
+\usepackage{booktabs}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{longtable}
+\usepackage{makecell}
+
+% \newcommand{\theHalgorithm}{\arabic{algorithm}}
+\usepackage{algorithmic}
+\usepackage[ruled, vlined, linesnumbered]{algorithm2e}
+\SetKw{KwRet}{return}
+
+
+\usepackage{adjustbox}
+
+
+\usepackage{amsmath,amssymb,bm}
+\usepackage{tikz}
+% \usetikzlibrary{arrows.meta,positioning}
+\newcommand{\BN}{\operatorname{BN}}
+\newcommand{\relu}{\operatorname{ReLU}}
+
+\newcommand{\tabincell}[2]{\begin{tabular}{@{}#1@{}}#2\end{tabular}}
+
+
+
+\usetikzlibrary{arrows.meta, positioning, calc, angles, quotes}
+\usepackage[table]{xcolor}
+\usepackage{microtype}
+
+\definecolor{lightblue}{RGB}{173,216,230}
+\definecolor{lightgreen}{RGB}{144,238,144}
+\definecolor{lightred}{RGB}{255,182,193}
+
+
+
+
+\usepackage{bm}
+
+\setlength{\topmargin}{-.5in} \setlength{\textheight}{9.25in}
+\setlength{\oddsidemargin}{0in} \setlength{\textwidth}{6.8in}
+
+%\newcommand*{\SOLVE}{}%
+
+\renewcommand{\vec}[1]{\mbox{\boldmath$#1$}}
+\newcommand{\mm}[1]{\mathbf{#1}}
+
+\newcommand{\func}[2]{\mbox{#1$\left(#2\right)$}}
+\newcommand{\prob}[1]{\func{P}{#1}}
+
+\newcommand{\pb}{\bm{p}}
+
+
+
+\usepackage{breqn}
+  
+\usepackage{geometry}
+\geometry{
+  paper=a4paper,
+  % showframe,
+  left=2cm,
+  right=2cm,
+  top=2cm}
+\usepackage{framed}
+\definecolor{shadecolor}{gray}{0.9}
+
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{positioning, arrows.meta}
+
+
+
+\usepackage[pagebackref,breaklinks,colorlinks]{hyperref}
+
+
+% Support for easy cross-referencing
+\usepackage[capitalize]{cleveref}
+\crefname{section}{Sec.}{Secs.}
+\Crefname{section}{Section}{Sections}
+\Crefname{table}{Table}{Tables}
+\crefname{table}{Tab.}{Tabs.}
+
+
+% %%%%%%%%% PAPER ID  - PLEASE UPDATE
+% \def\cvprPaperID{*****} % *** Enter the CVPR Paper ID here
+% \def\confName{CVPR}
+% \def\confYear{2022}
+
+
+\begin{document}
+
+\section{Problem Formulation}
+
+Antibody-antigen interaction is important for analyzing protein structures. The problem can be formulated as a bipartite graph link prediction task.
+The inputs are two disjoint graphs, an antibody graph $G_A = \left(V_A, E_A\right)$ and an antigen graph $G_B = \left(V_B, E_B\right)$, 
+where $V_x$ is the vertice set for graph $x$ and $E_x$ is the edge set for graph $x$.
+Since neural networks only take continuous values as input, we encode each vertex into a vector with the function $h: V \to \mathbb{R}^{D}$.
+The design choice of the encoding function depends on the methods. For example, $h$ can be a one-hot encoding layer or pretrained embeddings given by a protein language model.
+We use different encoding functions for antibodies and antigens:
+$h_A: V_A \to \mathbb{R}^{D_A}$, and
+$h_B: V_B \to \mathbb{R}^{D_B}$.
+
+In addition, $E_A \in \{0, 1\}^{|V_A| \times |V_A|}$ and
+$E_B \in \{0, 1\}^{|V_B| \times |V_B|}$ denote the adjacency matrices for the antibody and antigen graphs, respectively.
+In this work, the adjacency matrices are calculated based on the distance matrix of the residues.
+Each entry $e_{ij}$ denotes the proximity between residue $i$ and residue $j$; $e_{ij}=1$ if the Euclidean distance between any non-hydrogen atoms of residue $i$ and residue $j$ is less than \angs{4.5}, and $e_{ij}=0$ otherwise (See example in \cref{fig:distance-criterion}.
+The antibody graph $G_A$ is constructed by combining the CDR residues from the heavy and light chains of the antibody, and the antigen graph $G_B$ is constructed by combining the surface residues of the antigen. The antibody and antigen graphs are disjoint, i.e., $V_A \cap V_B = \emptyset$.
+
+
+\begin{figure}[htbp]
+  \centering
+  \centerline{\includegraphics[width=\columnwidth/2, keepaspectratio]{figures/interaction/interaction.png}}
+  \caption{An example illustrating interacting residues. The two dashed lines
+    indicate distances between non-hydrogen atoms from different interacting
+    residues across two protein chains, with each chain's carbon atoms 
+    colored cyan and green.}
+  \label{fig:distance-criterion}
+\end{figure}
+
+
+We consider two subtasks based on these inputs.
+
+\textbf{Epitope Prediction} Epitopes are the regions on the antigen surface recognized by antibodies; in other words, they are a set of antigen residues in contact with the antibody and are determined from the complex structures using the same distance cutoff of \angs{4.5} as aforementioned.
+For a node in the antigen graph $ v \in V_B$, if there exists a node in the antibody graph $u \in V_A$ such that the distance between them is less than \angs{4.5}, then $v$ is an epitope node. Epitope nodes and the remaining nodes in $G_B$ are assigned labels of $1$ and $0$, respectively.
+The first task is then a node classification within the antigen graph $G_B$ given the antibody graph $G_A$.
+
+This classification takes into account the structure of the antibody graph, $G_A$, mirroring the specificity of antibody-antigen binding interactions.
+Different antibodies can bind to various antigen locations, corresponding to varying subsets of epitope nodes in $G_B$.
+This formulation differs from conventional antigen-only epitope prediction that does not consider the antibody structure and ends up predicting the likelihood of the subset of antigen nodes serving as epitopes, such as ScanNet~\citep{scannet}, MaSIF~\citep{masif}. The goal is to develop a binary classifier $f: V_B \to \{0, 1\}$ that takes both antibody and antigen graphs as input and predicts the labels for antigen nodes:
+
+\begin{align}
+  f(v \,;G_B, G_A) & = \begin{cases}
+                         1 & \text{if } v \text{ is an epitope}; \\
+                         0 & \text{otherwise}.
+                       \end{cases}
+  \label{eq:epitope_classification}
+\end{align}
+
+
+\textbf{Bipartite Link Prediction} The second task takes it further by predicting concrete interactions between nodes in $ G_A $ and $ G_B $, resulting in a bipartite graph that represents these antibody-antigen interactions.
+Moreover, this helps attribute the model performance to specific interactions at the molecular level and provide more interpretability.
+Accurately predicting these interactions is critical for understanding the binding mechanisms and for guiding antibody engineering.
+We model the antibody-antigen interaction as a bipartite graph
+$
+  K_{m,n} = (V_A, V_B, E)
+$
+where $m = |V_A|$ and $n = |V_B|$ denote the numbers of nodes in the two graphs, respectively, and $E$ denotes all possible inter-graph links.
+In this bipartite graph, a node from the antibody graph is connected to each node in the antigen graph via an edge $e \in E$.
+The task is then to predict the label of each bipartite edge.
+If the residues of a pair of nodes are located within \angs{4.5} of each other, referred to as \textit{in contact}, the edge is labeled as $1$; otherwise, $0$.
+For any pair of nodes, denoted as $(v_a, v_b) \ \forall v_a \in V_A, v_b \in V_B$, the binary classifier $ g: K_{m,n} \rightarrow \{0, 1\} $ is formulated as below:
+\begin{align}
+  g(v_a, v_b; K_{m,n}) =
+  \begin{cases}
+    1 & \text{if $v_a$ and $v_b$ are in contact} \\
+    0 & \text{otherwise}.
+  \end{cases}
+\end{align}
+
+
+
+\section{AsEP Dataset}
+We present our dataset AsEP of filtered, cleaned and processed antibody-antigen complex structures. It is the largest collection of antibody-antigen complex structures to our knowledge.
+% and the unique representation method chosen enables researchers to 
+% Add a paragraph to define the acronyms used in the following section
+% (e.g., CDR, VH, VL, etc.)
+Antibodies are composed of two heavy chains and two light chains, each of which contains a variable domain (areas of high sequence variability) composed of a variable heavy (VH) and a variable light (VL) domain responsible for antigen recognition and binding \citep{chothia-ab-struct}. These domains have complementarity-determining regions (CDR, Figure~\ref{fig:graph-repr-visual} top {\color{blue}blue}, {\color{dandelion}yellow}, and {\color{red}red} regions), which are the primary parts of antibodies responsible for antigen recognition and binding.
+
+\begin{figure}[htbp]
+  \begin{center}
+    \centerline{\includegraphics[width=.9\columnwidth/2]{figures/graph-repr-visual.png}}
+    \caption{Graph visualization of an antibody-antigen complex. \textbf{Top}:
+      the molecular structure of an antibody complexed with the receptor binding domain
+      of SARS-Cov-2 virus (PDB code: 7KFW), the antigen. Spheres indicate the alpha carbon
+      atoms of each amino acid. Color scheme: the antigen is colored in
+        {\color{magenta}magenta},
+      the framework region of the heavy and light chains is colored in {\color{ForestGreen}green} and
+        {\color{cyan}cyan} and CDR 1-3 loops are colored in {\color{blue}blue}, {\color{dandelion}yellow}, and {\color{red}red}, respectively.
+      \textbf{Bottom}: the corresponding graph. Green vertices are
+      antibody CDR residues and pink vertices are antigen surface residues.}
+    \label{fig:graph-repr-visual}
+  \end{center}
+\end{figure}
+
+\subsection{Antibody-antigen complexes}
+
+We sourced our initial dataset from the Antibody Database (AbDb) \citep{abdb}, dated 2022/09/26, which contains $11,767$ antibody files originally collected from the Protein Data Bank (PDB) \citep{PDB}. We extracted conventional antibody-antigen complexes that have a VH and a VL domain with a single-chain protein antigen, and there are no unresolved CDR residues due to experimental errors, yielding $4,081$ antibody-antigen complexes.
+%
+To ensure data balance, we removed identical complexes using an adapted version of the method described in \citet{epipred}. We clustered the complexes by antibody heavy and light chains followed by antigen sequences using MMseqs2~\citep{mmseqs2}. We retained only one representative complex for each unique cluster, leading to a refined dataset of $1,725$ unique complexes.
+%
+Two additional complexes were manually removed; CDR residues in the complex \texttt{6jmr\_1P} are unknown (labeled as `UNK') and it is thus impossible to build graph representations upon this complex; \texttt{7sgm\_0P} was also removed because of non-canonical residues in its CDR loops.
+%
+The final dataset consists of $1,723$ antibody-antigen complexes. For detailed setup and processing steps, please refer to~\cref{sec:appendix-build-abag-dataset}.
+
+\subsection{Convert antibody-antigen complexes to graphs}
+
+These $1,723$ files were then converted into graph representations, which are used as input for WALLE.
+In these graphs, each protein residue is modeled as a vertex.
+Edges are drawn between pairs of residues if any of their non-hydrogen atoms are within \angs{4.5} of each other, adhering to the same distance criterion used in PECAN~\citep{pecan2020}.
+
+\textbf{Exclude buried residues} In order to utilize structural information effectively, we focused on surface residues, as only these can interact with another protein.
+Consequently, we excluded buried residues, those with a solvent-accessible surface area of zero, from the antigen graphs.
+The solvent-accessible surface areas were calculated using DSSP~\citep{dssp} via Graphein~\citep{graphein}.
+It is important to note that the number of interface nodes are much smaller than the number of non-interface nodes in the antigen, making the classification task more challenging.
+
+\textbf{Exclude non-CDR residues} We also excluded non-CDR residues from the antibody graph, as these are typically not involved in antigen recognition and binding.
+This is in line with the approach adopted by PECAN~\citep{pecan2020} and EPMP~\citep{epmp2021}.~\cref{fig:graph-repr-visual} provides a visualization of the processed graphs.
+
+
+\textbf{Node embeddings} To leverage the state-of-the-art protein language models, we generated node embeddings for each residue in the antibody and antigen graphs using AntiBERTy~\citep{antiberty} (via IgFold~\citep{IgFold} package) and ESM2~\citep{ESM2} (\texttt{esm2\_t12\_35M\_UR50D}) models, respectively.
+In our dataset interface package, we also provide a simple embedding method using one-hot encoding for amino acid residues.
+Other node embedding methods can be easily incorporated into our dataset interface.
+
+\subsection{Dataset split}\label{sec:dataset-split}
+
+We propose two types of dataset split settings. The first is a random split based on the ratio of epitope to antigen surface residues, $\frac{\#\text{epitope nodes}}{\#\text{antigen nodes}}$; the second is a more challenging setting where we split the dataset by epitope groups. The first setting is straightforward and used by previous methods, while the second setting requires the model to generalize to unseen epitope groups.
+
+
+\textbf{Split by epitope to antigen surface ratio} As aforementioned, the number of non-interface nodes in the antigen graph is much larger than the number of interface nodes.
+While epitopes usually have a limited number of residues, typically around $14.6 \pm 4.9$ amino acids~\citep{abagInterfaceAnalysis}, the antigen surface may extend to several hundred or more residues.
+The complexity of the classification task, therefore, increases with the antigen surface size.
+To ensure similar complexity among train, validation, and test sets, we stratified the dataset to include a similar distribution of epitope to non-epitope nodes in each set.
+\cref{tab:epitope-antigen-surface-distribution} shows the distribution of epitope-to-antigen surface ratios in each set.
+This led to $1383$ antibody-antigen complexes for the training set and $170$ complexes each for the validation and test sets.
+The list of complexes in each set is provided in the Supplementary Table \href{https://zenodo.org/records/14013579/files/SI-split-epitope-ratio.csv}{\texttt{SI-split-epitope-ratio.csv}}.
+
+\textbf{Split by epitope groups} This is motivated by the fact that antibodies are highly diverse in the CDR loops and by changing the CDR sequences it is possible to engineer novel antibodies to bind different sites on the same antigen. This was previously observed in the EpiPred dataset where \citet{epipred} tested the specificity of their method on five antibodies associated with three epitopes on the same antigen, \textit{hen egg white lysozyme}.
+
+We inlcude $641$ unique antigens and $973$ epitope groups in our dataset. We include multi-epitope antigens. For example, there are $64$ distinct antibodies that bind to coronavirus spike protein. We can see that different antibodies bind to different locations on the same antigen. Details of all epitope groups are provided in the Supplementary Table \href{https://zenodo.org/records/14013579/files/SI-AsEP-entries.csv}{\texttt{SI-AsEP-entries.csv}}. We then split the dataset into train, validation, and test sets such that the epitopes in the test set are not found in either train or validation sets. We used an \pc{80}/\pc{10}/\pc{10} split for the number of complexes in each set. This resulted in $1383$ complexes for the training set and $170$ complexes for the validation and test sets. The list of complexes in each set is provided in the Supplementary Table \href{https://zenodo.org/records/14013579/files/SI-split-epitope-group.csv}{\texttt{SI-split-epitope-group.csv}}.
+
+
+
+%%%%%%%%% TITLE - PLEASE UPDATE
+\title{Experiments}
+
+\tableofcontents
+
+\section*{Exploratory Data Analysis (EDA)}
+We utilized the AsEP dataset~\cite{liu2024asep}, a novel benchmark dataset of antibody-antigen complexes designed specifically for epitope prediction tasks. 
+The dataset was derived from the Antibody Database (AbDb) and the Protein Data Bank (PDB), comprising 1,723 unique antibody-antigen complexes after filtering and deduplication. 
+Each complex includes a single-chain protein antigen paired with a conventional antibody containing both heavy and light chains. Non-canonical residues and unresolved CDR regions were excluded to ensure data quality. 
+
+
+Our EDA revealed several key insights into the dataset and is shown in Figure~\ref{fig:density-plots}. 
+The distribution of epitope residues showed a mean of 19 ± 4.7, while the antigen surface residues numbered in the hundreds. 
+The contact distribution between residues in the bipartite graph had a mean of 43.7 contacts with a standard deviation of 12.8. 
+Additionally, the dataset includes 641 unique antigens and 973 epitope groups, highlighting the diversity and complexity of the antibody-antigen interactions captured in the AsEP dataset.
+
+We performed exploratory data analysis on the training dataset to understand the distribution of the number of residue-residue contacts in the antibody-antigen interface. 
+We found that the number of contacts is approximately normally distributed with a mean of 43.42 and a standard deviation of 11.22 (Figure~\ref{fig:distribution}). 
+We used this information to set the regularizer in the loss function to penalize the model for predicting too many or too few positive edges.
+
+
+%%%%%%%%%%%%%%%% loss function from the WALLE model (AsEP) %%%%%%%%%%%%%%
+
+
+\section*{Loss function}
+Our loss function is a weighted sum of two parts: a binary cross-entropy loss for the bipartite graph linkage reconstruction and a \textcolor{yellow}{regularizer for the number of positive edges in the reconstructed bipartite graph.}
+
+\begin{equation}
+\text{Loss} = \mathcal{L}_r + \lambda \left| \sum^{N} \hat{e} - c \right|
+\end{equation}
+
+\begin{equation}
+\mathcal{L}_r = -\frac{1}{N} \sum_{i=1}^{N} \left( w_{\text{pos}} \cdot y_e \cdot \log(\hat{y}_e) + w_{\text{neg}} \cdot (1 - y_e) \cdot \log(1 - \hat{y}_e) \right)
+\end{equation}
+
+The binary cross-entropy loss $\mathcal{L}_r$ is weighted by $w_{\text{pos}}$ and $w_{\text{neg}}$ for positive and negative edges, respectively. During hyperparameter tuning, we kept $w_{\text{neg}}$ fixed at 1.0 and tuned $w_{\text{pos}}$. $N$ is the total number of edges in the bipartite graph, $y_e$ denotes the true label of edge $e$, and $\hat{y}_e$ denotes the predicted probability of edge $e$. The regularizer $\left| \sum^{N} \hat{e} - c \right|$ is the L1 norm of the difference between the sum of the predicted probabilities of all edges of the reconstructed bipartite graph and the mean positive edges in the training set, i.e., $c$ set to 43. This aims to prevent an overly high false positive rate, given the fact that the number of positive edges is far less than positive edges. The regularizer weight $\lambda$ is tuned during hyperparameter tuning.
+
+\section*{Hyperparameters}
+We carried out hyperparameter search within a predefined space that included:
+
+\begin{itemize}
+    \item Weights for positive edges in bipartite graph reconstruction loss, sampled uniformly between 50 and 150.
+    \item \textcolor{yellow}{Weights for the sum of bipartite graph positive links}, where values were drawn from a log-uniform distribution spanning $1e-7$ to $1e-4$.
+    \item \textcolor{yellow}{Edge cutoff (x)}, defining an epitope node as any antigen node with more than x edges, with x sampled following a normal distribution with a mean of 3 and a standard deviation of 1.
+    \item Number of graph convolutional layers in the encoder, we tested using 2 and 3 layers.
+    \item Decoder type was varied between two configurations:
+    \begin{itemize}
+        \item A fully connected layer, equipped with a bias term and a dropout rate of 0.1.
+        \item An inner product decoder.
+    \end{itemize}
+\end{itemize}
+
+
+\subsection{bipartite link prediction baseline}
+
+While the majority of existing studies focus on node-level prediction, i.e., predicting which residues are likely to be the epitope residues, we are interested in predicting the interactions between epitope and antigen residues. We argue that, on the one hand, this would provide a more comprehensive understanding of the interaction between epitopes and antigens, and on the other hand, it would be good in terms of model interpretability. Existing methods for predicting epitope residues are mostly based on sequence information, which is not directly interpretable in terms of the interaction between epitopes and antigens.
+
+Our \textbf{hyperparameter search} was conducted within a predefined space as defined in Appendix \textcolor{yellow}{A.6}. We used the Bayesian optimization strategy implemented through Weights \& Biases, targeting the maximization of the average bipartite graph link Matthew's Correlation Coefficient (MCC).
+
+The optimization process was managed using the early termination functionality provided by the Weights \& Biases' Hyperband method (Falkner et al., 2018), with a range of minimum to maximum iterations set from 3 to 27.
+
+The best performance on both tasks and dataset splits was achieved using a combination of 2 GCNConv-layer architecture with AntiBERTy and ESM2-650M as the antibody and antigen node embeddings, respectively.
+
+For the epitope prediction task, the best-performing model on the epitope-to-antigen surface ratio dataset split has model parameters that include a weight for positive edges of 140.43, a weight for the sum of positive links of approximately \(1.03 \times 10^{-5}\), and an edge cutoff of 3.39 residues for epitope identification. The decoder applied is an inner-product decoder. For the epitope group dataset split, the best-performing model uses an inner-product decoder with a weight for positive edges set to 122.64, a weight for the sum of positive links of approximately \(1.97 \times 10^{-7}\), and an edge cutoff of 9.11 residues for epitope identification. See Table \textcolor{yellow}{S7} for their performance.
+
+For the bipartite link prediction task, the best-performing model on the epitope-to-antigen surface ratio dataset split shares the same configuration as the best-performing model for the epitope prediction task on this split. On the epitope group dataset split, the best-performing model uses a weight for positive edges of 125.79, a weight for the sum of positive links of approximately \(3.99 \times 10^{-7}\), and an edge cutoff of 18.56 residues, also employing an inner-product decoder. See Table \textcolor{yellow}{S7} for their performance.
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%
+% Graph Modules
+%%%%%%%%%%%%%%%%%%%%
+
+\textbf{Graph Modules} The architecture of WALLE incorporates graph modules that process the input graphs of antibody and antigen structures, as depicted in \cref{fig:baseline-model-architecture}). 
+Inspired by PECAN and EPMP, our model treats the antibody and antigen graphs separately, with distinct pathways for each.
+The antibody graph is represented by node embeddings $ X_A $ with a shape of $ (M, D_A) $ and an adjacency matrix $ E_A $, while the antigen graph is described by node embeddings $ X_B $ with a shape of $ (N, D_B) $ and its corresponding adjacency matrix $ E_B $. 
+Both antibody and antigen graph nodes are first projected into the dimensionality of $ 128 $ using fully connected layers.
+The resulting embeddings are then passed through two GNN layers consecutively to refine the features and yield updated node embeddings $ X_A^\prime $ and $X_B^\prime$ with a reduced dimensionality of $ (M, 64) $.
+The output from the first GNN layer is passed through a ReLU activation function.
+Outputs from the second GNN layer are directly fed into the \textit{Decoder} module.
+These layers operate independently, each with its own parameters, ensuring that the learned representations are specific to the antibody or the antigen.
+The use of separate graph modules for the antibody and antigen allows for the capture of unique structural and functional characteristics pertinent to each molecule before any interaction analysis.
+This design choice aligns with the understanding that antibodies and antigens have distinct roles in their interactions and that their molecular features should be processed separately. 
+
+\paragraph{Combining unstructured (sequential) with structural modeling} The embedding size, $ D_A $ and $ D_B $, are determined by the pre-trained protein language model (PPLM). 
+We extracted embeddings from the final layer outputs of each PPLM as node features for our GNNs. 
+We experimented with different combinations of graph neural network (GNN) architectures and PPLM embeddings. 
+We assessed commonly used graph modules, Graph Convolutional Network (GCN) \citep{gcn}, Graph Attention Network (GAT) \citep{gat}, and GraphSAGE networks \citep{graphsage};
+and PPLMs including, AntiBERTy \citep{antiberty}, ESM2-35M (\texttt{esm2\_t12\_35M\_UR50D}), ESM2-650M (\texttt{esm2\_t33\_650M\_UR50D}) \citep{ESM2}. 
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%
+% Decoder 
+%%%%%%%%%%%%%%%%%%%%
+
+\textbf{Decoder} We used a simple decoder to predict binary labels for edges between the antibody and antigen graphs. 
+This decoder takes pairs of node embeddings, output by the graph modules, as input and predicts the probability of each edge. 
+% decoder architectures: (1) inner-product; (2) linear layer + dropout 
+During hyperparameter tuning, we compute the final logits by either taking the inner product of the antibody and antigen embeddings or concatenating them and passing them through a single linear layer with dropout. 
+A sigmoid function is applied to produce the final probabilities.
+% 
+An edge is assigned a binary label of $1$ if the predicted probability exceeds $0.5$ or $0$ otherwise. 
+This is shown as the \textit{Decoder} module in~\cref{fig:baseline-model-architecture}.
+% The two tasks
+For the epitope prediction task, we convert edge-level predictions to node-level by summing the predicted probabilities of all edges connected to an antigen node.
+We assign the antigen node a label of $1$ if the number of connected edges surpasses a set threshold or $0$ otherwise. 
+This threshold is treated as a hyperparameter and optimized during experimentation.
+
+%%%%%%%%%%%%%%%%%%%%
+% Implementation
+%%%%%%%%%%%%%%%%%%%%
+
+\textbf{Implementation} We used PyTorch Geometric \citep{pytorch_geometric} framework to build our model.
+The graph modules are implemented using \textit{GCNConv}. \textit{GATConv}, \textit{SAGEConv} modules from PyTorch Geometric.
+We trained the model to minimize a loss function consisting of two parts:
+a weighted binary cross-entropy loss for the bipartite graph link reconstruction and a regularizer for the number of positive edges in the reconstructed bipartite graph.
+We used the same set of hyperparameters and loss functions for both dataset settings.
+The loss function and hyperparameters are described in detail in~\cref{sec:appendix-implementation-details}. 
+We report only the best performance of different combinations of graph modules and pre-trained language model embeddings in \cref{tab:benchmark-performance} (refer to \cref{sec:appendix-eval-walle-different-graph-architecture} for the performance of all combinations. 
+
+%%%%%%%%%%%%%%%% loss function from the WALLE model (AsEP) %%%%%%%%%%%%%%
+

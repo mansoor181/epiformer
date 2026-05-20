@@ -1,0 +1,38 @@
+# @package _global_
+# Validation Mode Configuration - Train/Val/Test split for model validation
+
+mode:
+  mode: "val"
+  
+  # Data configuration
+  data_path: "${hydra:runtime.cwd}/../../../../data/asep/m3epi/hierarchical_dataset.pkl"
+  test_subset_path: "${hydra:runtime.cwd}/../../../../data/asep/m3epi/test_subset_150.pkl"  # Larger test subset
+  use_test_subset: true  # Use expanded test subset for validation experiments
+  
+  # Split configuration
+  split_type: "random"  # Options: "random", "epitope_ratio", "epitope_group" 
+  train_ratio: 0.7
+  val_ratio: 0.15  
+  test_ratio: 0.15
+  random_seed: 42
+  
+  # Training configuration
+  num_epochs: 50
+  batch_size: 4
+  accumulation_steps: 4  # Effective batch size = 16
+  
+  # Validation configuration
+  validation_frequency: 5  # Validate every 5 epochs
+  early_stopping_patience: 15
+  
+  # Monitoring
+  monitor_gradients: false
+  monitor_weights: false
+  log_predictions: false  # Set to true for detailed prediction analysis
+  
+  # Memory management
+  clear_cache_frequency: 10  # Clear GPU cache every 10 epochs
+  
+  # Evaluation metrics
+  compute_detailed_metrics: true
+  save_predictions: false  # Save predictions for analysis

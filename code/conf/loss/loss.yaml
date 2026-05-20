@@ -1,0 +1,103 @@
+node_prediction:
+  enabled: true  # Set to true if you want edge prediction loss
+  name: "focal"  # Switch between "focal" and "bce"
+  weight: 1.0
+  task: "epi_only" # switch to joint (epitope + paratope loss)
+  
+  #  -recommended loss weights (DEFAULT WEIGHTS)
+  bce_weight: 1.0          # λ_bce = 1.0
+  dice_weight: 0.3         # λ_dice = 0.3 (  recommendation) 
+  smoothness_weight: 0.01  # λ_smooth = 0.01 (1e-3 to 1e-2)
+  consistency_weight: 0.1  # λ_consist = 0.1 (  recommendation)
+  
+  #  -recommended loss component controls
+  dice_enabled: true              # Enable Dice loss for imbalanced segmentation
+  count_regularizer_enabled: true # Enable count regularization for calibration  
+  smoothness_enabled: true        # Enable smoothness regularizer for contiguous patches
+  edge_node_consistency_enabled: true # Enable edge-node consistency loss
+  
+  # Focal loss parameters
+  # Balanced focal loss alpha to prevent overconfidence
+  epi_alpha: 0.25  # Balanced for epitope
+  para_alpha: 0.25  # Balanced for paratope
+  gamma: 1.0
+  
+  # BCE parameters (used only if name="bce") - more balanced weights
+  epi_pos_weight: 20  #   recommendation for imbalanced epitope prediction
+  para_pos_weight: 3   # Reduced from 8 to prevent extreme positive bias
+
+  
+# edge prediction 
+edge_prediction:
+  enabled: false  # Set to true if you want edge prediction loss
+  name: "binary_cross_entropy"
+  weight: 0.1
+  pos_weight: 2
+
+
+contrastive:
+  enabled: false  # Set to true if you want contrastive loss
+  name: "infonce" # either "infonce", "gwnce" or "" for ce only
+  temperature: 0.7     # τ in all InfoNCE formulas 
+  intra_weight: 0.1    # λ_intra
+  inter_weight: 0.1    # λ_inter
+  weight: 1.0
+
+gwnce:
+  cut_rate: 0.5        # the paper’s 'cutrate' default 1
+  cut_way: 2           # the paper’s 'cutway' default 2
+  weight: 0.1          # λ_gwnce
+
+
+# New parameters
+focal:
+  gamma: 1.0
+  alpha: 0.25
+  max_gamma: 2.5
+  step_size: 0.02  # Increase gamma by 0.02 per epoch (slower than 0.05)
+  
+class_balance:
+  beta: 0.9999
+  
+label_smoothing: 0.1
+  
+multi_task: true
+  
+regularization:
+  weight: 0.001
+  type: "l2"
+
+# Count regularization ( -validated)
+count_regularizer:
+  enabled: true
+  
+  # Variant 1: Per-graph cardinality matching (most effective)
+  per_graph_matching: true
+  epitope_weight: 0.1      # λ_count = 0.1 (  recommendation)
+  paratope_weight: 0.1
+  
+  # Variant 2: Dataset-level count prior
+  dataset_prior: false
+  epitope_prior_mean: 14.6 # AsEP dataset statistics
+  prior_weight: 0.05
+  anneal_epochs: 10
+
+
+# Edge count regularization (complement to node count regularizer)
+edge_count_regularizer:
+  enabled: false     # Enable to match predicted vs true interaction counts per graph
+  weight: 0.1       # λ_edge_count - weight for edge count regularization
+
+
+# AUXILIARY DISTANCE PREDICTION
+auxiliary_distance:
+  enabled: false  # Enable auxiliary distance bin prediction for improved geometric learning
+  weight: 0.1    # Weight for auxiliary distance prediction loss
+  distance_weighting: true  # Enable inverse distance weighting (focus on closer pairs)
+  class_balancing: true     # Enable class balancing for imbalanced distance bins
+  max_distance: 12.0        # Only compute loss for pairs within this distance (Å)
+  
+  # Distance bins: <6, 6-8, 8-10, 10-12, >12 Angstroms
+  # Cross-entropy loss for discrete distance bin classification  
+  # Inverse distance weighting: closer pairs get higher importance
+  # Provides geometric supervision

@@ -1,0 +1,7 @@
+mode: train
+
+# only override what differs from defaults:
+hparams:
+  train:
+    num_epochs: 5
+    kfolds: 2

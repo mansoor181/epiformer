@@ -1,0 +1,58 @@
+# dataset:
+# ============================================
+# Data Paths Configuration
+# ============================================
+tensor: "hierarchical_dataset_test.pkl"  # Default for RAAD
+
+# Graph type configuration - affects encoder architecture
+graph_type: "raad-plm"  # Options: "base", "simple", "gearnet", "raad"
+graph_num_relations: 4
+
+plm_type: "esm2_35m"
+esm2_35m: "res_graph_tensor_esm2_35m.pkl"
+esm2_650m: "res_graph_tensor_esm2_650m.pkl"
+esm2_3b: "res_graph_tensor_esm2_3b.pkl"
+esm3_small: "res_graph_tensor_esm3_small.pkl"
+
+
+# TODO: Added dataset split configuration for AsEP paper compatibility
+split:
+  method: "epitope_ratio"  # Options: "random", "epitope_ratio", "epitope_group"
+  seed: 42         # Random seed for reproducible splits
+  # AsEP paper split file paths (corrected for excluded complexes)
+  split_dict_path: "data/asep/split/split_dict_corrected.pt"
+  pdb_ids_path: "data/asep/split/asepv1-AbDb-IDs-corrected.txt"
+
+paths:
+  # AsEP preprocessed data (contains PLM embeddings and labels)
+  asep_data: "../../../data/asep/dict_pre_cal_esm2_esm2.pkl"
+
+  # PDB structure directories
+  antigen_pdb_dir: "../../../data/asep/ag_atmseq2surf"    # Antigen surface PDBs
+  antibody_pdb_dir: "../../../data/asep/ab_atmseq2cdr"    # Antibody CDR PDBs
+
+
+  # ============================================
+  # Residue Graph Configuration
+  # ============================================
+  residue_graph:
+    # Graph construction parameters
+    k_nn: 10                   # Number of nearest neighbors for k-NN edges
+    spatial_cutoff: 8.0        # Spatial cutoff for residue-residue edges (Angstroms)
+    sequential_cutoffs: [1, 2] # Sequential distance cutoffs for sequence edges
+
+    # Feature dimensions
+    geometric_features: 105    # Total geometric feature dimension
+    aa_onehot: 20             # Amino acid one-hot encoding
+    positional_encoding: 16   # Positional encoding dimension
+    placeholder_features: 69  # Placeholder for PSSM, SASA, local profiles, etc.
+
+    # Edge features
+    edge_features:
+      relation_types: 4        # Number of relation types (sequential 1, sequential 2, spatial, k-NN)
+      relation_onehot: 4       # Relation type one-hot encoding
+      positional_encoding: 16  # Positional difference encoding
+      rbf_encoding: 16         # RBF distance encoding
+      direction_vector: 3      # 3D direction vector
+      other_features: 57       # Placeholder for angles, orientations, etc.
+      total_dimension: 96      # Total edge feature dimension

@@ -1,0 +1,30 @@
+# @package _global_
+# Test Mode Configuration - Train/Test split without validation (faster training)
+
+mode:
+  mode: "test"
+  
+  # Data configuration
+  data_path: "${hydra:runtime.cwd}/../../../../data/asep/m3epi/hierarchical_dataset.pkl"
+  test_subset_path: "${hydra:runtime.cwd}/../../../../data/asep/m3epi/test_subset_150.pkl"
+  use_test_subset: true
+  
+  # Split configuration - no validation set
+  split_type: "random"
+  train_ratio: 0.8  # Larger training set
+  val_ratio: 0.0   # No validation
+  test_ratio: 0.2
+  random_seed: 42
+  
+  # Training configuration
+  num_epochs: 30  # Fewer epochs since no early stopping
+  batch_size: 4
+  accumulation_steps: 4
+  
+  # No validation
+  validation_frequency: 0  # Disabled
+  early_stopping_patience: 0  # Disabled
+  
+  # Evaluation metrics
+  compute_detailed_metrics: true
+  save_predictions: true

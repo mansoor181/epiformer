@@ -1,0 +1,16 @@
+mode: dev
+
+# speed everything up for quick iterations:
+hparams:
+  train:
+    batch_size: 8
+    num_epochs: 5
+    kfolds: 2
+
+# only train / validate on a small subset:
+data:
+  dev_subset: 10
+
+# # run wandb in offline mode by default in dev:
+# wandb:
+#   mode: offline

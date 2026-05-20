@@ -1,0 +1,38 @@
+# @package _global_
+# epiformer Model Configuration - Override for epiformerModel usage
+
+defaults:
+  - model
+
+model:
+  name: "epiformer"
+  
+  # epiformer parameters take precedence over ag_encoder/ab_encoder when name="epiformer"
+  epiformer:
+    # Basic parameters (unified for both AG and AB)
+    residue_dim: 105
+    residue_hidden_dim: 128
+    residue_layers: 4
+    edge_dim: 100
+    num_relations: 4
+    
+    # PLM parameters
+    plm_dim: 128
+    ag_plm_in_dim: 480  # ESM-2 dimension for antigen
+    ab_plm_in_dim: 512  # AntiBERTy dimension for antibody
+    
+    # Cross-attention parameters
+    n_heads: 3  # Number of attention heads (105 divisible by 3)
+    attention_dropout: 0.1
+    
+    # Feedforward network parameters
+    ffn_expansion_factor: 4  # FFN hidden dim = expansion_factor * residue_dim
+    
+    # General parameters
+    dropout: 0.1
+    use_layer_norm: true
+    activation: "relu"  # relu, gelu, silu/swish, leaky_relu
+    
+    # Memory optimization
+    use_gradient_checkpointing: false
+    checkpoint_segments: 2
