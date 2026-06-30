@@ -2,6 +2,8 @@
 
 This repository contains the implementation of EpiFormer, a GNN-based model for epitope and paratope prediction on antibody-antigen complexes.
 
+![EpiFormer](code/data/epiformer.png)
+
 ## Requirements
 
 - Python 3.10
