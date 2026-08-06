@@ -261,10 +261,10 @@ python trainer.py \
 ## Citation
 
 ```bibtex
-@inproceedings{epiformer2026,
-  title={EpiFormer: Antibody-Aware Epitope Prediction with Interleaved Cross-Attention},
-  author={Anonymous},
-  booktitle={Anonymous},
+@article{ahmed2026epiformer,
+  title={EpiFormer: Learning Antigen-Antibody Interactions for Epitope Prediction via Geometric Deep Learning},
+  author={Ahmed, Mansoor and Chai, Huirong and Wang, Haoxin and Venkateswara, Hemanth and Patterson, Murray},
+  journal={arXiv preprint arXiv:2606.04154},
   year={2026}
 }
 ```
