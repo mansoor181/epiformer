@@ -264,7 +264,7 @@ python trainer.py \
 @inproceedings{epiformer2026,
   title={EpiFormer: Antibody-Aware Epitope Prediction with Interleaved Cross-Attention},
   author={Anonymous},
-  booktitle={NeurIPS},
+  booktitle={Anonymous},
   year={2026}
 }
 ```
