@@ -1,0 +1,49 @@
+# -------------------------------------------------------------------
+# Core configuration.  Default mode is 'train'; override via +mode=dev or +mode=test
+# -------------------------------------------------------------------
+defaults:
+  - _self_
+  - mode: dev      # choices: train, dev, test
+  - hparams: hparams
+  - model:   model
+  - loss:    loss
+  - wandb:   wandb
+  - callbacks: callbacks
+  - dataset: dataset
+  - override hydra/hydra_logging: disabled  
+  - override hydra/job_logging: disabled  
+
+
+base_dir: "media/volume"
+
+# NOTE: data_dir and results_dir are not used by trainer.py (which constructs
+# paths from base_dir). Kept for reference / other scripts.
+data_dir: /media/volume/data/epiformer
+results_dir: /media/volume/data/results/epiformer
+
+try_gpu: true
+logging_method: none  # Options: none, wandb (requires wandb installed and configured)
+keep_interim_ckpts: true
+num_threads: 4
+seed: 42
+
+gpu_id: 0
+
+# to resume training
+resume: false
+run_id: ""
+
+# -------------------------------------------------------
+# For visualize_embeddings.py
+# -------------------------------------------------------
+visualize:
+  checkpoint: /media/volume/data/results/epiformer/checkpoints/model-02-7.17.pt
+  batch_size: 32
+  out_dir:    /media/volume/data/results/epiformer/figures
+
+# to disable hydra to save configs, overrides, and log files to `outputs` dir
+hydra:  
+  output_subdir: null  
+  run:  
+    dir: .
+

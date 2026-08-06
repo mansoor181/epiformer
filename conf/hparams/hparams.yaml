@@ -1,0 +1,29 @@
+train:
+  # Standard downstream training hyperparameters
+  batch_size: 16
+  num_epochs: 15
+  learning_rate: 0.0005
+  weight_decay: 0.001
+  kfolds: 2
+  grad_clip: 1.0
+  use_scheduler: true
+  
+  scheduler: "reduce_lr_on_plateau" # "reduce_lr_on_plateau", "cosine_annealing", "one_cycle_lr"
+    # factor: 0.5
+    # patience: 5
+    # min_lr: 1e-6
+    # mode: 'min'
+  
+  # Regularization parameters
+  regularization:
+    l2_lambda: 0.0001
+    label_smoothing: 0.1
+    use_l2_reg: false
+
+
+
+model:
+  edge_cutoff: 10.0  # Å
+  interaction_cutoff: 8.0  # Å
+
+

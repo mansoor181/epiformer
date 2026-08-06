@@ -1,0 +1,235 @@
+program: trainer.py
+method: bayes
+command:
+  - python
+  - trainer.py
+  - ${args_no_hyphens}
+metric:
+  goal: maximize
+  name: val_epitope_f1
+
+parameters:
+  # Fixed experiment settings
+  mode:
+    value: "val"
+  logging_method:
+    value: "wandb"
+  wandb.project:
+    value: "m3epi_v3"
+  dataset.split.method:
+    value: "epitope_ratio"
+  dataset.graph_type:
+    value: "raad-plm"
+  dataset.plm_type:
+    value: "esm2_650m"
+  dataset.graph_num_relations:
+    value: 4
+  num_threads:
+    value: 3
+  resume:
+    value: false
+  model.name:
+    value: "epiformer"
+  callbacks.early_stopping.patience:
+    value: 10
+
+  # KEY: disable PLM features
+  model.epiformer.use_plm:
+    value: false
+
+  # ---------- Encoder architecture ----------
+  # Previous best: residue_layers=4, residue_dim=128, residue_hidden_dim=128
+  # Explore slightly wider range around 4 layers
+  model.epiformer.residue_layers:
+    values: [3, 4, 5, 6]
+  model.epiformer.residue_dim:
+    values: [96, 128, 192]
+  model.epiformer.residue_hidden_dim:
+    values: [96, 128, 192]
+  model.epiformer.plm_dim:
+    value: 128
+  model.epiformer.n_heads:
+    values: [4, 8]
+  model.epiformer.use_layer_norm:
+    value: true
+  model.epiformer.use_gradient_checkpointing:
+    value: false
+  model.epiformer.ag_feature_fusion_type:
+    value: "concat"
+  model.epiformer.ab_feature_fusion_type:
+    value: "gated"
+  model.epiformer.activation:
+    values: ["silu", "gelu"]
+
+  # Previous best: dropout=0.1324, decoder_dropout=0.0720
+  # Tighten around these values
+  model.epiformer.dropout:
+    distribution: uniform
+    min: 0.05
+    max: 0.25
+  model.dropout_rates.decoder:
+    distribution: uniform
+    min: 0.03
+    max: 0.20
+  model.dropout_rates.projections:
+    distribution: uniform
+    min: 0.05
+    max: 0.20
+
+  # ---------- Decoder config ----------
+  # Previous best: cross_attention, decoder_layers=2, d_model=128
+  model.decoder.type:
+    value: "cross_attention"
+  model.decoder.num_rbf:
+    value: 16
+  model.decoder.d_k:
+    values: [64, 96]
+  model.decoder.d_ff:
+    values: [128, 192]
+  # d_model is auto-set to residue_dim in code (must match encoder output)
+  model.decoder.d_model:
+    value: 128
+  model.decoder.n_heads:
+    values: [4, 8]
+  model.decoder.decoder_layers:
+    values: [2, 3]
+  model.decoder.sampling_strat:
+    value: "top_k_mean_2"
+  model.decoder.predict_distances:
+    value: true
+
+  model.epi_threshold:
+    distribution: uniform
+    min: 0.2
+    max: 0.6
+  model.para_threshold:
+    distribution: uniform
+    min: 0.2
+    max: 0.6
+  model.use_layer_norm:
+    value: true
+
+  # ---------- Loss configurations ----------
+  # All tightened around previous best values
+
+  # Edge prediction: previous best pos_weight=58.71
+  loss.edge_prediction.enabled:
+    value: true
+  loss.edge_prediction.weight:
+    value: 1.0
+  loss.edge_prediction.pos_weight:
+    distribution: log_uniform_values
+    min: 30
+    max: 120
+
+  # Node prediction: previous best weight=0.482, bce_weight=9.32, epi_pos_weight=15.29
+  loss.node_prediction.enabled:
+    value: true
+  loss.node_prediction.name:
+    value: "bce"
+  loss.node_prediction.task:
+    value: "epi_only"
+  loss.node_prediction.weight:
+    distribution: uniform
+    min: 0.2
+    max: 0.8
+  loss.node_prediction.bce_weight:
+    distribution: uniform
+    min: 5
+    max: 15
+  loss.node_prediction.epi_pos_weight:
+    distribution: log_uniform_values
+    min: 8
+    max: 40
+  loss.node_prediction.para_pos_weight:
+    value: 3
+
+  # Dice loss: previous best dice_weight=2.30
+  loss.node_prediction.dice_enabled:
+    value: true
+  loss.node_prediction.dice_weight:
+    distribution: uniform
+    min: 1.0
+    max: 4.0
+
+  # Count regularizer: previous best epitope_weight=0.307
+  loss.node_prediction.count_regularizer_enabled:
+    value: true
+  loss.count_regularizer.enabled:
+    value: true
+  loss.count_regularizer.per_graph_matching:
+    value: true
+  loss.count_regularizer.epitope_weight:
+    distribution: uniform
+    min: 0.1
+    max: 0.6
+  loss.count_regularizer.paratope_weight:
+    value: 0.1
+  loss.count_regularizer.dataset_prior:
+    value: false
+  loss.count_regularizer.epitope_prior_mean:
+    value: 14.6
+  loss.count_regularizer.prior_weight:
+    value: 0.05
+  loss.count_regularizer.anneal_epochs:
+    value: 10
+
+  # Auxiliary distance: previous best weight=0.0514
+  loss.auxiliary_distance.enabled:
+    value: true
+  loss.auxiliary_distance.weight:
+    distribution: uniform
+    min: 0.02
+    max: 0.12
+  loss.auxiliary_distance.distance_weighting:
+    value: true
+  loss.auxiliary_distance.class_balancing:
+    value: true
+  loss.auxiliary_distance.max_distance:
+    value: 32.0
+
+  # Disabled losses
+  loss.node_prediction.smoothness_enabled:
+    value: false
+  loss.node_prediction.edge_node_consistency_enabled:
+    value: false
+  loss.edge_count_regularizer.enabled:
+    value: false
+  loss.contrastive.enabled:
+    value: false
+  loss.multi_task:
+    value: true
+  loss.label_smoothing:
+    distribution: uniform
+    min: 0.05
+    max: 0.15
+  loss.class_balance.beta:
+    value: 0.9999
+
+  # ---------- Training hparams ----------
+  # Previous best: lr=9.095e-5, wd=1.179e-5
+  hparams.train.num_epochs:
+    value: 130
+  hparams.train.regularization.use_l2_reg:
+    value: false
+  hparams.train.learning_rate:
+    distribution: log_uniform_values
+    min: 0.00004
+    max: 0.0002
+  hparams.train.batch_size:
+    value: 8
+  hparams.train.weight_decay:
+    distribution: log_uniform_values
+    min: 0.000005
+    max: 0.00005
+  hparams.train.kfolds:
+    value: 2
+  hparams.train.scheduler:
+    value: "reduce_lr_on_plateau"
+  callbacks.checkpoint_interval:
+    value: 2
+
+count: 60
+early_terminate:
+  type: hyperband
+  max_iter: 10

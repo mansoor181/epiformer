@@ -1,0 +1,33 @@
+# @package _global_
+# Debug Mode Configuration - Simple monitoring for model behavior analysis
+
+mode:
+  mode: "debug"
+  
+  # Data configuration - use small subset for debugging
+  data_path: "${hydra:runtime.cwd}/../../../../data/asep/m3epi/hierarchical_dataset.pkl"
+  test_subset_path: "${hydra:runtime.cwd}/../../../../data/asep/m3epi/test_subset_25.pkl"
+  use_test_subset: true
+  
+  # Split configuration
+  split_type: "random"
+  train_ratio: 0.6
+  val_ratio: 0.2
+  test_ratio: 0.2
+  random_seed: 42
+  
+  # Training configuration
+  num_epochs: 25
+  batch_size: 2
+  accumulation_steps: 2
+  
+  # Validation configuration
+  validation_frequency: 2
+  early_stopping_patience: 15
+  
+  # Simple debug monitoring
+  debug_frequency: 5  # Report debug info every 5 epochs
+  save_embeddings: true  # Save final embeddings for visualization
+  
+  # Memory management
+  clear_cache_frequency: 5

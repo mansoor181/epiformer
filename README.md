@@ -1,8 +1,6 @@
 # EpiFormer: Antibody-Aware Epitope Prediction
 
-This repository contains the implementation of EpiFormer, a GNN-based model for epitope and paratope prediction on antibody-antigen complexes.
-
-![EpiFormer](code/data/epiformer.png)
+This repository contains the implementation of EpiFormer (arXiv: https://arxiv.org/abs/2606.04154), a GNN-based model for epitope and paratope prediction on antibody-antigen complexes.
 
 ## Requirements
 
@@ -58,7 +56,7 @@ data/asep/split/split_dict_corrected.pt
 
 2. Run preprocessing scripts (6 steps):
 ```bash
-cd code/data
+cd data
 
 # Step 2: Reindex PDB files
 python reindex_ag_split_complex.py
@@ -79,7 +77,7 @@ python embed_antiberty.py
 python construct_res_graphs_tensor.py
 ```
 
-See [code/data/README.md](code/data/README.md) for detailed preprocessing documentation.
+See [data/README.md](data/README.md) for detailed preprocessing documentation.
 
 ### Step 3: Training
 
@@ -87,8 +85,7 @@ Train the model using the best hyperparameters.
 
 **For epitope-group split:**
 ```bash
-cd code
-./scripts/best_glamorous_sweep_epi_group.sh \
+./scripts/m1_noplm_epi_group.sh \
     --gpu_id 0 \
     --batch_size 8 \
     --epochs 130 \
@@ -97,7 +94,7 @@ cd code
 
 **For epitope-ratio split:**
 ```bash
-./scripts/best_playful_sweep_epi_ratio.sh \
+./scripts/m1_noplm_epi_ratio.sh \
     --gpu_id 0 \
     --batch_size 8 \
     --epochs 130 \
@@ -106,7 +103,7 @@ cd code
 
 **With Weights & Biases logging:**
 ```bash
-./scripts/best_glamorous_sweep_epi_group.sh \
+./scripts/m1_noplm_epi_group.sh \
     --gpu_id 0 --batch_size 8 --epochs 130 --server local --wandb
 ```
 
@@ -116,21 +113,15 @@ cd code
 
 Evaluate a trained model checkpoint on both dataset splits.
 
-**First, place checkpoint files:**
-```
-checkpoints/
-└── best-glamorous-sweep-37/
-    └── epiformer_best.pt
-```
-
 **Run evaluation:**
 ```bash
-cd code
 python evaluate.py \
-    --checkpoint ../checkpoints/best-glamorous-sweep-37/epiformer_best.pt \
-    --data_dir ../data/asep \
+    --checkpoint checkpoints/epiformer-epitope-ratio/epiformer_best.pt \
+    --data_dir /path/to/data \
     --gpu_id 0
 ```
+
+See [CHECKPOINTS.md](CHECKPOINTS.md) for which checkpoint belongs to which split.
 
 This evaluates on both `epitope_ratio` and `epitope_group` splits and reports:
 - AUROC, AUPRC, F1, MCC, Precision, Recall
@@ -156,11 +147,10 @@ pip install anarci       # Optional: Better CDR detection (falls back to Chothia
 
 **Basic usage (automatic filtering):**
 ```bash
-cd code
 python inference.py \
     --antigen_pdb path/to/antigen.pdb \
     --antibody_pdb path/to/antibody.pdb \
-    --checkpoint ../checkpoints/best-glamorous-sweep-37/epiformer_best.pt
+    --checkpoint checkpoints/epiformer-epitope-ratio/epiformer_best.pt
 ```
 
 This will:
@@ -215,33 +205,30 @@ color red, epitope
 ```
 epiformer/
 ├── README.md
+├── CHECKPOINTS.md           # Checkpoint provenance and reported metrics
 ├── requirements.txt
-├── code/
-│   ├── trainer.py           # Main training script
-│   ├── evaluate.py          # Evaluation on AsEP dataset
-│   ├── inference.py         # End-to-end prediction on new PDBs
-│   ├── utils.py
-│   ├── conf/                # Hydra configuration
-│   ├── model/               # Model implementation
-│   │   ├── epiformer.py
-│   │   ├── encoder.py
-│   │   ├── decoder.py
-│   │   └── ...
-│   ├── data/                # Preprocessing scripts
-│   │   ├── README.md        # Preprocessing documentation
-│   │   ├── construct_res_graphs_tensor.py
-│   │   └── ...
-│   └── scripts/
-│       ├── best_glamorous_sweep_epi_group.sh
-│       └── best_playful_sweep_epi_ratio.sh
-├── walle/                   # AsEP data loading utilities
-├── checkpoints/             # Model checkpoints
-│   └── best-glamorous-sweep-37/
-│       └── epiformer_best.pt
-└── data/                    # Data directory
-    └── asep/
-        ├── m3epi/res_graph_tensor_esm2_650m.pkl
-        └── split/split_dict_corrected.pt
+├── trainer.py               # Main training script
+├── evaluate.py              # Evaluation on AsEP dataset
+├── inference.py             # End-to-end prediction on new PDBs
+├── utils.py
+├── conf/                    # Hydra configuration
+├── model/                   # Model implementation
+│   ├── epiformer.py
+│   ├── encoder.py
+│   ├── decoder.py
+│   └── ...
+├── data/                    # Preprocessing scripts
+│   ├── README.md            # Preprocessing documentation
+│   ├── construct_res_graphs_tensor.py
+│   └── ...
+├── scripts/
+│   ├── m1_noplm_epi_ratio.sh
+│   ├── m1_noplm_epi_group.sh
+│   └── run_m1_noplm_multiseed.sh
+├── analysis/                # Analysis figures
+└── checkpoints/             # Model checkpoints
+    ├── epiformer-epitope-ratio/epiformer_best.pt
+    └── epiformer-epitope-group/epiformer_best.pt
 ```
 
 ## Configuration
@@ -274,8 +261,8 @@ python trainer.py \
 ```bibtex
 @inproceedings{epiformer2026,
   title={EpiFormer: Antibody-Aware Epitope Prediction with Interleaved Cross-Attention},
-  author={Mansoor Ahmed, Huirong Chai, Haoxin Wang, Hemanth Venkateswara, Murray Patterson},
-  booktitle={arXiv},
+  author={Anonymous},
+  booktitle={NeurIPS},
   year={2026}
 }
 ```
